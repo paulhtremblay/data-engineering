@@ -4,16 +4,8 @@ import os
 from google.cloud import bigquery
 from schemas import tv_streaming
 
-def remove_table(
-        table_id, 
-        client = None, 
-        verbose = False,
-        not_found_ok = False):
-    if not client:
-        client = bigquery.Client()
-    client.delete_table(table_id, not_found_ok=not_found_ok) 
-    if verbose:
-        print(f"Deleted table '{table_id}'.")
+import common
+import get_sql
 
 def insert_data(
         table_id, 
@@ -23,6 +15,7 @@ def insert_data(
     bytes_ = [333, 455, 789, 888, 444, 333, 111, 222]
     data = {1: [1,3,5,1],
             2: [5],
+            3: [1, 2],
                 }
     d = []
     for key in data.keys():
@@ -49,48 +42,18 @@ def insert_data(
     result=  client.query(sql)
     result.result()
 
-def create_table(
-        client, 
-        table_id, 
-        dataset_id, 
-        schema, 
-        clustering_fields =  None, 
-        partition_field = None, 
-        require_partition_filter = False, 
-        use_partition = False,
-        description = None, 
-        verbose = False):
-    dataset_ref = client.dataset(dataset_id)
-    table_ref = dataset_ref.table(table_id)
-    table = bigquery.Table(table_ref, schema=schema)
-    if use_partition:
-        if partition_field != None:
-            table.time_partitioning = bigquery.TimePartitioning(type_=bigquery.TimePartitioningType.DAY, field = partition_field, 
-                    require_partition_filter = require_partition_filter)
-        else:
-            table.time_partitioning = bigquery.TimePartitioning(type_=bigquery.TimePartitioningType.DAY, 
-                    require_partition_filter=require_partition_filter)
-        
-    if clustering_fields !=  None:
-        table.clustering_fields = clustering_fields
-    if description !=  None:
-        table.description = description
-    result = client.create_table(table)  
-    if verbose:
-        print(
-    "Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id)
-        )
-
 
 def main():
     project = 'paul-henry-tremblay'
     dataset_id = 'data_engineering'
     table_id = 'tv_streaming'
     client = bigquery.Client()
-    remove_table(table_id =  f'{project}.{dataset_id}.{table_id}',
+    test_query(client = client)
+    return
+    common.remove_table(table_id =  f'{project}.{dataset_id}.{table_id}',
             verbose = True, client = client,
             not_found_ok = True)
-    create_table(
+    common.create_table(
         client = client, 
         table_id = table_id, 
         dataset_id = dataset_id, 
@@ -103,6 +66,39 @@ def main():
     insert_data(
             table_id = f'{project}.{dataset_id}.{table_id}', 
             client = client)
+    test_query(client = client)
+
+def test_query(client):
+    sql = get_sql.get_sql_string(path = 'sql/group_streaming.sql')
+    result=  client.query(sql)
+    result.result()
+    stats = {}
+    for i in result:
+        d = {}
+        for j in i.items():
+            d[j[0]] = j[1]
+        if not stats.get(d['id']):
+            stats[d['id']] =  {}
+        if not stats[d['id']].get(d['gn']):
+            stats[d['id']][d['gn']] = {'n':0, 'start_time':None, 'end_time':None}
+
+
+        stats[d['id']][d['gn']]['n'] += 1 
+        stats[d['id']][d['gn']]['start_time'] =  d['group_start_time']
+        stats[d['id']][d['gn']]['end_time'] =  d['group_end_time']
+
+    def max_group(d, id_):
+        return max(d[id_].keys())
+
+    assert max_group(d = stats, id_ =1) == 4 #4 groups
+    assert max_group(d = stats, id_ =2) == 1 #1 groups
+    assert max_group(d = stats, id_ =3) == 2 #2 groups
+    assert stats[1][1]['n'] == 1 #id 1, gn1 has 1 row
+    assert stats[1][2]['n'] == 3 #id 1, gn2 has 3 row
+    assert stats[1][3]['n'] == 5 #id 1, gn3 has 5 row
+    assert stats[1][4]['n'] == 1 #id 1, gn4 has 1 row
+    assert stats[3][1]['n'] == 1 #id 3, gn1 has 1 row
+    assert stats[3][2]['n'] == 2 #id 3, gn2 has 2 row
 
 
 if __name__ == '__main__':
