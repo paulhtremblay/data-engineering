@@ -48,8 +48,6 @@ def main():
     dataset_id = 'data_engineering'
     table_id = 'tv_streaming'
     client = bigquery.Client()
-    test_query(client = client)
-    return
     common.remove_table(table_id =  f'{project}.{dataset_id}.{table_id}',
             verbose = True, client = client,
             not_found_ok = True)
