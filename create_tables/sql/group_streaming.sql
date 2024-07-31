@@ -59,6 +59,12 @@ lookup_t AS (
   GROUP BY id, group_start_time, group_end_time
 
 )
-SELECT *
+SELECT id,
+  gn AS session_number,
+  group_start_time,
+  group_end_time,
+  DATETIME_DIFF(group_end_time, group_start_time,  SECOND) AS total_seconds,
+  SUM(bytes) AS total_bytes
 FROM grouped
-ORDER BY id, start_time
+GROUP BY id, gn , group_start_time, group_end_time
+ORDER BY id, gn

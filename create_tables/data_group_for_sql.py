@@ -16,6 +16,7 @@ def insert_data(
     data = {1: [1,3,5,1],
             2: [5],
             3: [1, 2],
+            4: [2, 2],
                 }
     d = []
     for key in data.keys():
