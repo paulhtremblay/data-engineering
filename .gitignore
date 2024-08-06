@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 notebooks/customer_problem
 notebooks/data.csv
+examples/__init__.py
+bq/data/
