@@ -12,7 +12,9 @@ def create_table(table_id,
         clustering_fields =  None, 
         partition_field = None, 
         require_partition_filter = False, 
-        description = None):
+        verbose = False,
+        description = None,
+        ):
     if not client:
         client = bigquery.Client()
     dataset_ref = client.dataset(dataset_id)

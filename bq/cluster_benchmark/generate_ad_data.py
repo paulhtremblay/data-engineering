@@ -25,8 +25,11 @@ def main(
         file_size = 100000, 
         num_files = 25, 
         date = '2024-08-05', 
-        cardinality = 5):
+        cardinality = 5, 
+        verbose = False):
     choices = _choices(cardinality = cardinality)
+    if verbose:
+        print(f'generating {num_files} num files with {cardinality} cardinality')
     for i in range(num_files):
         with open(os.path.join('data', f'file-{i + 1}.csv'), 'w') as write_obj:
             csv_writer = csv.writer(write_obj)

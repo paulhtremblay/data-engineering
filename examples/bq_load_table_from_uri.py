@@ -1,6 +1,6 @@
 from google.cloud import bigquery
 
-def load_table(uri, table_id):
+def load_table(uri, table_id, verbose = False):
 
     client = bigquery.Client()
     job_config = bigquery.LoadJobConfig(
@@ -13,4 +13,5 @@ def load_table(uri, table_id):
         )
     load_job.result()  
     destination_table = client.get_table(table_id)
-    print("Loaded {} rows.".format(destination_table.num_rows))
+    if verbose:
+        print("Loaded {} rows.".format(destination_table.num_rows))

@@ -164,3 +164,9 @@ notebooks/customer_problem
 notebooks/data.csv
 examples/__init__.py
 bq/data/
+bq/cluster_benchmark/benc_hist.png
+bq/cluster_benchmark/data/
+examples/bq_graphs_common.py
+examples/seaborn/out.png
+examples/seaborn/penguins.csv
+
