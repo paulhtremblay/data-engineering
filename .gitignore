@@ -169,4 +169,4 @@ bq/cluster_benchmark/data/
 examples/bq_graphs_common.py
 examples/seaborn/out.png
 examples/seaborn/penguins.csv
-
+*.png

@@ -4,7 +4,7 @@ import csv
 import string
 
 def _choices(cardinality):
-    return [1000 * random.randint(1, cardinality + 1) for x in range(cardinality)]
+    return [1000 * x for x in range(1, cardinality + 1)]
 
 def make_data(type_, choices = None):
     if type_ in ['order_id', 'creative_id', 'placement_id']:

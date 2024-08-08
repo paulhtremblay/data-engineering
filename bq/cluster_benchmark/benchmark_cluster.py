@@ -9,6 +9,8 @@ import statistics
 from google.cloud import bigquery
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 cur_dir = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
 one_up = os.path.split(cur_dir)[0]
@@ -35,48 +37,76 @@ def _get_args():
             default = 5, type = int, help="cardinality of data")
     parser.add_argument("--sample-size", '-s',  
             default = 30, type = int, help="sample runs")
+    parser.add_argument("--cols",   
+             type = int, required = True,  help="num cols on benchmark")
     args = parser.parse_args()
     return args
 
-def _make_fig(cluster, no_cluster):
+def _make_hist(cluster, no_cluster, cardinality):
+    plt.figure()
+    sns.set_theme(style = 'white')
     df = pd.DataFrame(data = {'clust':cluster, 'no-clust':no_cluster})
     hist_plot = sns.histplot(data=df)
     hist_plot.set(xlabel='millis')
-    hist_plot.set_title('Cluster vs No Cluster, Cardinality = 20')
-    fig = hist_plot.get_figure()
-    fig.savefig("benc_hist.png")
+    hist_plot.set_title(f'Cluster vs No Cluster, Cardinality = {cardinality}')
+    plt.savefig("benc_hist.png")
 
-def _print_stats(cluster, no_cluster):
+def _make_bar(cluster, no_cluster, cardinality):
+    plt.figure()
+    sns.set_theme(style = 'white')
+    name = ['cluster', 'no-cluster']
+    seconds = [statistics.mean(cluster), statistics.mean(no_cluster)]
+    df = pd.DataFrame(data = {'type':name, 'millis': seconds})
+    bar_plot = sns.barplot(df, x="type", y="millis")
+    bar_plot.set_title(f'Cluster vs No Cluster, Cardinality = {cardinality}')
+    plt.savefig('mean.png')
+    plt.show()
+
+def _print_stats(cluster, no_cluster, cardinality):
     print(statistics.mean(cluster)/statistics.mean(no_cluster))
-    _make_fig(cluster = cluster, no_cluster = no_cluster)
+    rat = round(statistics.mean(no_cluster)/statistics.mean(cluster), 1)
+    print(f'diff is ({round(statistics.mean(no_cluster))} {round(statistics.mean(cluster))}) {rat}')
+    return
+    _make_hist(
+            cluster = cluster, 
+            no_cluster = no_cluster,
+            cardinality = cardinality
+            )
+    _make_bar(
+            cluster = cluster, 
+            no_cluster = no_cluster,
+            cardinality = cardinality
+            )
 
 
-def _run_query(client, sample_size, table_name):
+def _run_query(client, sample_size, table_name, cols):
     l = []
-
     query = f"""
-        SELECT sku, name1, name2, name3,  RAND()
+        SELECT sku,  RAND()
     FROM
      `{table_name}`
     WHERE
       date = "2024-08-05"
       and  order_id = 4000
-      --and creative_id = 2000
-      and placement_id = 2000
         """
+    if cols == 3:
+        query += '\nand creative_id = 2000 \n AND placement_id = 2000'
+    elif cols == 2:
+        query += '\nand creative_id = 2000 '
     for i in range(sample_size):
         query_job = client.query(query)
         rows = query_job.result()  
         l.append(query_job.slot_millis)
     return l
 
-def measure(sample_size, verbose = False):
+def measure(sample_size, cols, verbose = False):
     client = bigquery.Client(project="paul-henry-tremblay")
     if verbose:
         print(f'running non cluster {sample_size} times')
     no_cluster = _run_query(
             sample_size = sample_size, 
             table_name = 'paul-henry-tremblay.data_engineering.ads',
+            cols = cols,
             client = client
             )
     if verbose:
@@ -84,12 +114,14 @@ def measure(sample_size, verbose = False):
     cluster = _run_query(
             sample_size = sample_size, 
             table_name = 'paul-henry-tremblay.data_engineering.ads_with_cluster',
+            cols = cols,
             client = client
             )
     return cluster, no_cluster
 
 def main(num_files, 
         cardinality, 
+        cols,
         sample_size = 30,
         verbose = False,
         just_measure = False):
@@ -126,9 +158,12 @@ def main(num_files,
                 )
         examples.bq_load_table_from_uri.load_table(
             uri = "gs://paul-henry-tremblay-general/ad_data/*",
-            table_id = 'paul-henry-tremblay.data_engineering.ads'
+            table_id = 'paul-henry-tremblay.data_engineering.ads',
+            verbose = verbose
                 )
-        examples.delete_table.delete_table('paul-henry-tremblay.data_engineering.ads_with_cluster')
+        examples.delete_table.delete_table(
+                'paul-henry-tremblay.data_engineering.ads_with_cluster',
+                verbose = verbose)
         examples.create_table.create_table(
                 table_id = 'ads_with_cluster', 
                 dataset_id  = 'data_engineering',
@@ -136,14 +171,22 @@ def main(num_files,
                 partition_field = ad_table_schema_with_clustering.PARTITION_FIELD,
                 require_partition_filter = ad_table_schema_with_clustering.REQUIRE_PARTITION,
                 clustering_fields =  ad_table_schema_with_clustering.CLUSTERING_FIELDS, 
+                verbose = verbose
                 )
         examples.bq_load_table_from_uri.load_table(
             uri = "gs://paul-henry-tremblay-general/ad_data/*",
             table_id = 'paul-henry-tremblay.data_engineering.ads_with_cluster',
             verbose = verbose
                 )
-    cluster, no_cluster = measure(sample_size = sample_size, verbose = verbose)
-    _print_stats(cluster = cluster, no_cluster = no_cluster)
+    cluster, no_cluster = measure(
+            sample_size = sample_size, 
+            cols = cols,
+            verbose = verbose
+            )
+    _print_stats(
+            cluster = cluster, 
+            no_cluster = no_cluster,
+            cardinality = cardinality)
 
 if __name__ == '__main__':
     args = _get_args()
@@ -152,5 +195,6 @@ if __name__ == '__main__':
             num_files = args.num_files,
             verbose = args.verbose,
             just_measure = args.measure,
-            sample_size = args.sample_size
+            sample_size = args.sample_size,
+            cols = args.cols
             )
