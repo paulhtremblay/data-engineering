@@ -10,4 +10,7 @@ query_job = client.query(QUERY)
 rows = query_job.result()  
 
 for row in rows:
-    print(row.name)
+    for j in row.items():
+        print(j)
+    i.name
+    break

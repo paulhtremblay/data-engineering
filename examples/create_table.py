@@ -38,3 +38,7 @@ def create_table(table_id,
     if description !=  None:
         table.description = description
     table = client.create_table(table)  
+    for i in dir(table):
+        if i.startswith('_'):
+            continue
+        print(i)

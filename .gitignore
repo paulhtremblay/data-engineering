@@ -170,3 +170,6 @@ examples/bq_graphs_common.py
 examples/seaborn/out.png
 examples/seaborn/penguins.csv
 *.png
+pub_sub/data/*
+pub_sub/query_events
+
