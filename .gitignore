@@ -172,4 +172,7 @@ examples/seaborn/penguins.csv
 *.png
 pub_sub/data/*
 pub_sub/query_events
+dataproc/spark/checkpoint_dir/
+dataproc/spark/data/
+dataproc/spark/streaming_out/
 
