@@ -2,7 +2,6 @@ from pyspark.sql import SparkSession
 from pyspark import SparkContext
 from  pyspark.sql import SQLContext
 from pyspark.sql.types import *
-import tempfile
 
 import os
 import csv
