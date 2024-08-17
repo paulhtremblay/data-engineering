@@ -175,4 +175,5 @@ pub_sub/query_events
 dataproc/spark/checkpoint_dir/
 dataproc/spark/data/
 dataproc/spark/streaming_out/
+dataproc/spark/out_data/
 

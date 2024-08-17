@@ -6,6 +6,7 @@ from pyspark.sql import functions as F
 
 """
 simple example of reading from Kafka
+reads batch, so msgs never acknoledged? 
 """
 
 
@@ -24,6 +25,21 @@ def _make_spark_context():
     return spark
 
 def main():
+    spark = _make_spark_context()
+    df = spark \
+      .read \
+      .format("kafka") \
+      .option("kafka.bootstrap.servers", "localhost:9092") \
+      .option("subscribe", "numtest") \
+      .load()
+    df = df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)").show()
+    return
+    df = df.withColumn("col1", F.from_json("value", " struct<number:long>"))
+    df = df.withColumn("col1", F.col("col1.number"))
+    df.createOrReplaceTempView("my_table")
+    spark.sql("select col1, count(*)  from my_table group by col1 order by col1").show(truncate = False)
+
+def main_():
     spark = _make_spark_context()
     df = spark \
       .read \
