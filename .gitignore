@@ -176,4 +176,9 @@ dataproc/spark/checkpoint_dir/
 dataproc/spark/data/
 dataproc/spark/streaming_out/
 dataproc/spark/out_data/
+dataproc/spark/data_out/
+dataproc/spark/example.db
+dataproc/spark/experiment1.py
+dataproc/spark/sqlite-jdbc-3.34.0.jar
+dataproc/spark/temp.py
 
