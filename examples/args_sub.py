@@ -25,6 +25,7 @@ def _get_args():
     parser_convert_gpx.add_argument("--out", "-o", required = False,  
             help="out path of file")
 
+    parser_convert_gpx.set_defaults(func=convert_to_gpx)
 
     args = parser.parse_args()
     args.func(args)

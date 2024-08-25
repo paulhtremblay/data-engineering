@@ -11,6 +11,10 @@ def _get_args():
     parser.add_argument("--verbose", '-v',  action ='store_true')  
     parser.add_argument("--continuous", '-c',  action ='store_true')  
     parser.add_argument("number", type = int,  help="number of messages")
+    parser.add_argument("number", 
+            type = str,  
+            nargs = "?",
+            help="number")
     args = parser.parse_args()
     return args
 
@@ -47,5 +51,6 @@ def main(number, continuous):
 
 if __name__ == '__main__':
     args = _get_args()
-    main(args.number, continuous = args.continuous)
+    print(args)
+    #main(args.number, continuous = args.continuous)
 
