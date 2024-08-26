@@ -39,7 +39,7 @@ def _get_args():
             nargs = "?",
             help="number")
     parser.add_argument("--sleep-time", 
-            type = int,  
+            type = float,  
             default = 1,
             help="sleep time")
     args = parser.parse_args()
