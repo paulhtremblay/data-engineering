@@ -1,0 +1,9 @@
+{
+	"namespace": "person.avro",
+	"type": "record",
+	"name": "person_no_middle",
+	"fields": [
+		{"name": "first", "type": "string"},
+		{"name": "last", "type": "string"},
+		]
+}
