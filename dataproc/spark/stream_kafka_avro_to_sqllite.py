@@ -78,4 +78,6 @@ def main(out_dir, checkpoint_dir):
         .awaitTermination()
 
 if __name__ == '__main__':
-    main(out_dir = 'streaming_dir', checkpoint_dir = 'checkpoint_dir')
+    main(
+            out_dir = 'streaming_dir', 
+            checkpoint_dir = 'checkpoint_dir')
