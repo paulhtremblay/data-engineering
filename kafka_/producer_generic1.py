@@ -1,5 +1,6 @@
 from time import sleep
 from json import dumps
+import json
 import  argparse
 import datetime
 import time
@@ -45,6 +46,19 @@ def _get_args():
     args = parser.parse_args()
     return args
 
+class DateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    raise TypeError ("Type %s not serializable" % type(obj))
+
 def produce(args):
     if args.serializer == 'json':
         producer = get_producer_json()
@@ -59,6 +73,8 @@ def produce(args):
 
     elif args.data == 'person':
         func = make_person_middle
+    if args.verbose:
+        print(f'producting to topic {args.topic_name}')
     def wrapper():
         func(producer = producer,
                 topic_name = args.topic_name,
@@ -103,7 +119,7 @@ def make_person_middle(producer, topic_name, gen, key):
 
 def get_producer_json():
     producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
-                value_serializer=lambda x: dumps(x).encode('utf-8'),
+                value_serializer=lambda x: dumps(x, default = json_serial).encode('utf-8'),
                 acks = 'all'
                 )
     return producer
