@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime
+from datetime import timezone
 import logging
 import random
 import json
@@ -10,22 +11,19 @@ pp = pprint.PrettyPrinter(indent = 4)
 For a session window, the gap bewteen each determines the window size
 """
 
-from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, WindowInto, WithKeys
+from apache_beam import Pipeline, GroupBy, PTransform, ParDo
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows, Sessions
 import apache_beam as beam
 DATA = [
-        {'serverID': 'server_1', 'CPU_Utilization': 0, 'timestamp': 1},
-        {'serverID': 'server_2', 'CPU_Utilization': 10, 'timestamp': 1},
-        {'serverID': 'server_3', 'CPU_Utilization': 20, 'timestamp': 3},
-        {'serverID': 'server_1', 'CPU_Utilization': 30, 'timestamp': 2},
-        {'serverID': 'server_2', 'CPU_Utilization': 40, 'timestamp': 3},
-        {'serverID': 'server_3', 'CPU_Utilization': 50, 'timestamp': 6},
-        {'serverID': 'server_1', 'CPU_Utilization': 60, 'timestamp': 7},
-        {'serverID': 'server_2', 'CPU_Utilization': 70, 'timestamp': 7},
-        {'serverID': 'server_3', 'CPU_Utilization': 80, 'timestamp': 14},
-        {'serverID': 'server_2', 'CPU_Utilization': 85, 'timestamp': 8.5},
-        {'serverID': 'server_1', 'CPU_Utilization': 90, 'timestamp': 14}
+        {'user': 'user_1', 'bytes_used': 1, 'timestamp': 
+            datetime(2024,1,1,0,0,0, tzinfo = timezone.utc)},
+        {'user': 'user_2', 'bytes_used': 10, 'timestamp': 
+            datetime(2024,1,1,0,0,0, tzinfo = timezone.utc)},
+        {'user': 'user_1', 'bytes_used': 2, 'timestamp': 
+            datetime(2024,1,1,0,0,1, tzinfo = timezone.utc)},
+        {'user': 'user_2', 'bytes_used': 20, 'timestamp': 
+            datetime(2024,1,1,0,0,59, tzinfo = timezone.utc)},
     ]
 
 def _get_args():
@@ -42,6 +40,25 @@ def _get_args():
         help='if creating a template')
     known_args, pipeline_args = parser.parse_known_args()
     return known_args, pipeline_args
+
+class TimeDiff(beam.DoFn):
+    """
+    calculate the time diff
+    """
+    def process(self, element):
+        d = {'key': element.key,
+            'start_time': element.start_time,
+            'end_time': element.end_time,
+            'total': element.total
+                }
+        d['time_diff'] = (d['end_time'] - d['start_time']).total_seconds()
+        yield d
+
+    def process_(self, element):
+        x = element._asdict()
+        x['time_diff'] = (x['end_time'] - x['start_time']).total_seconds()
+        yield x
+
 
 class ProcessPubSubDoFn(beam.DoFn):
   """parse pub/sub message."""
@@ -73,7 +90,7 @@ class GroupMessagesBySessions(PTransform):
 class AddKeyInfoFn(beam.DoFn):
     """output tuple of window(key) + element(value)"""
     def process(self, element, window=beam.DoFn.WindowParam):
-        yield (element['serverID'], element)
+        yield (element['user'], element)
 
 class ToDict(beam.DoFn):
 
@@ -96,18 +113,19 @@ def run(window_size=10.0, num_shards=5, pipeline_args=None):
           f'gs://{known_args.temp_location}', '--runner', known_args.runner] 
     pipeline_options = PipelineOptions(
         pipeline_args, 
-        streaming=True, 
+        streaming=False, 
         save_main_session=True,
         template_location= known_args.template_location,
     )
 
     with Pipeline(options=pipeline_options) as pipeline:
         lines = (pipeline | 'Create Events' >> beam.Create(DATA) 
-           #next line is needed in order to make field a timestamp
         | 'Add Timestamps' >> beam.Map(lambda x: beam.window.TimestampedValue(x, x['timestamp'])) 
-        | 'keyed on serverID' >> beam.ParDo(AddKeyInfoFn()) 
-        | 'Add Window info' >>  beam.WindowInto(beam.window.Sessions(5)) 
-        | 'Group by key' >> beam.GroupByKey() 
+        | 'group by' >> GroupBy(lambda x: x['user']) \
+            .aggregate_field(lambda x: x['bytes_used'], sum, 'total') 
+            .aggregate_field(lambda x: x['timestamp'], min, 'start_time') 
+            .aggregate_field(lambda x: x['timestamp'], max, 'end_time') 
+        | 'get time diff' >> beam.ParDo(TimeDiff())
         | 'print1' >> beam.ParDo(PrintElements())
         )
 
