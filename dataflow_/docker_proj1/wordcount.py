@@ -12,6 +12,28 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 from dependencies.lib1 import TEST_VAR2
 
+def _get_args():
+    """
+    passed when creating the template
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument( '--project', '-p',
+             choices = ['paul-henry-tremblay'],
+             required = True,
+        help='project')
+    parser.add_argument( '--runner', '-r',
+            choices = ['DataflowRunner', 'DirectRunner'],
+            default = 'DirectRunner',
+        help='runner')
+    parser.add_argument( '--template_location', '-t',
+            default = None,
+        help='if creating a template')
+    parser.add_argument( '--region', 
+            default = 'us-west1' ,
+        help='region')
+    known_args, pipeline_args = parser.parse_known_args()
+    return known_args, pipeline_args
+
 
 class RunTimeOptions(PipelineOptions):
     """
@@ -40,45 +62,35 @@ class WordExtractingDoFn(beam.DoFn):
     TEST_VAR2
     return re.findall(r'[\w\']+', element, re.UNICODE)
 
-def run(argv=None, save_main_session=True):
-  parser = argparse.ArgumentParser()
-  """
-  parser.add_argument(
-      '--input',
-      dest='input',
-      default='gs://dataflow-samples/shakespeare/kinglear.txt',
-      help='Input file to process.')
-  parser.add_argument(
-      '--output',
-      dest='output',
-      required=False,
-      help='Output file to write results to.')
-  """
-  known_args, pipeline_args = parser.parse_known_args(argv)
+def format_result(word, count):
+  return '%s: %d' % (word, count)
 
-  # We use the save_main_session option because one or more DoFn's in this
-  # workflow rely on global context (e.g., a module imported at module level).
-  pipeline_options = PipelineOptions(pipeline_args)
-  pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
-  runtime_options = pipeline_options.view_as(RunTimeOptions)
+def run(save_main_session=True):
+    known_args, pipeline_args = _get_args()
+    image_url = 'us-west1-docker.pkg.dev/paul-henry-tremblay/dataflow-ex/dataflow/d-image:tag1'
+    pipeline_options = PipelineOptions(
+        region= known_args.region,
+        project= known_args.project, 
+        runner= known_args.runner,
+        experiments=['use_runner_v2'],
+        sdk_container_image=image_url, 
+        sdk_location='container',
+        streaming=False, 
+    )
 
-  # The pipeline will be run on exiting the with block.
-  with beam.Pipeline(options=pipeline_options) as p:
+    pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
+    runtime_options = pipeline_options.view_as(RunTimeOptions)
 
-    # Read the text file[pattern] into a PCollection.
-    lines = p | 'Read' >> ReadFromText(runtime_options.input)
-
-    counts = (
-        lines
-        | 'Split' >> (beam.ParDo(WordExtractingDoFn()).with_output_types(str))
-        | 'PairWithOne' >> beam.Map(lambda x: (x, 1))
-        | 'GroupAndSum' >> beam.CombinePerKey(sum))
-
-    def format_result(word, count):
-      return '%s: %d' % (word, count)
-    output = counts | 'Format' >> beam.MapTuple(format_result)
-    output | 'Write' >> WriteToText(runtime_options.output)
-
+    with beam.Pipeline(options=pipeline_options) as p:
+        lines = p | 'Read' >> ReadFromText(runtime_options.input)
+        counts = (
+            lines
+            | 'Split' >> (beam.ParDo(WordExtractingDoFn()).with_output_types(str))
+            | 'PairWithOne' >> beam.Map(lambda x: (x, 1))
+            | 'GroupAndSum' >> beam.CombinePerKey(sum)
+            | 'Format' >> beam.MapTuple(format_result)
+            | 'Write' >> WriteToText(runtime_options.output)
+            )
 
 if __name__ == '__main__':
   logging.getLogger().setLevel(logging.INFO)

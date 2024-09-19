@@ -10,6 +10,11 @@
 4. Local build:
    bash run_local.sh
 
+5. To run in gcp, first create a template:
+   create_template.sh
+
+6. Run run_in_gcp.sh
+
 
 
 Other notes
