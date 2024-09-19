@@ -1,0 +1,22 @@
+1. create Docker image
+
+2. Build the  local package
+   python setup.py build sdist
+
+3. bash build_push_image.sh which is 
+   gcloud builds submit --tag  us-west1-docker.pkg.dev/paul-henry-tremblay/dataflow-ex/dataflow/d-image:tag1 .
+   The tar.gz file is copied to the Docker image and then installed, along with requirments.txt
+
+4. Local build:
+   bash run_local.sh
+
+
+
+Other notes
+------------
+pull image
+docker pull \
+    us-west1-docker.pkg.dev/paul-henry-tremblay/dataflow-ex/dataflow/d-image:tag1
+
+docker images
+

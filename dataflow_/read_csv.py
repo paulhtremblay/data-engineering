@@ -2,6 +2,7 @@ import os
 import csv
 
 import apache_beam
+print(dir(apache_beam.io.ReadFromText))
 
 TEST_FILE ='test.csv' 
 with open(TEST_FILE, 'w') as write_obj:

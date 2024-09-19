@@ -1,0 +1,3 @@
+docker compose up -d
+to tear down:
+docker compose down
