@@ -9,12 +9,25 @@ sudo apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev \
                         libncurses5-dev libncursesw5-dev xz-utils tk-dev \
                         libffi-dev liblzma-dev python3-openssl git
 
+# python 3.8
 mkdir ~/python38
 cd ~/python38
 wget https://www.python.org/ftp/python/3.8.16/Python-3.8.16.tgz
 tar -xf Python-3.8.16.tgz
 
 cd Python-3.8.16
+./configure --enable-optimizations
+make -j$(nproc)
+
+sudo make install
+
+# python 3.9
+
+mkdir ~/python39
+cd ~/python39
+wget https://www.python.org/ftp/python/3.9.2/Python-3.9.2.tgz
+tar -xf Python-3.9.2.tgz
+cd Python-3.9.2
 ./configure --enable-optimizations
 make -j$(nproc)
 
