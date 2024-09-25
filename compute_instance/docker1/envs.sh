@@ -1,7 +1,7 @@
 REGION=us-west1
 REPOSITORY=dataflow-ex
 PROJECT_ID=paul-henry-tremblay
-FILE_NAME=flex-image
+FILE_NAME=ubuntu-image
 TAG=tag1
 TEMPLATE_NAME=getting_started-py2.json
 IMAGE_URL=$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/dataflow/$FILE_NAME:$TAG
