@@ -23,14 +23,14 @@ class ExampleWithStartbundle(beam.DoFn):
 
     def process(self, element, window = beam.DoFn.WindowParam):
         self.window = window
-        yield element
+        self.elements.append(element)
 
     def setup(self):
         pass
 
     def finish_bundle(self, *args, **kwargs):
         yield beam.utils.windowed_value.WindowedValue(
-            value ='Not sure what this does',
+            value = self.elements,
             timestamp = 0,
             windows = [self.window],
             )
