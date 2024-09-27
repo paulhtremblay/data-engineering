@@ -1,4 +1,3 @@
-
 from apache_beam.transforms.periodicsequence import PeriodicImpulse
 from apache_beam.transforms.window import TimestampedValue
 from apache_beam.transforms import window
