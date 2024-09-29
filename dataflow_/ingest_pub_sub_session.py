@@ -49,6 +49,7 @@ class ProcessPubSubDoFn(beam.DoFn):
       return element
     
 
+#not used? 
 class GroupMessagesBySessions(PTransform):
     """A composite transform that groups Pub/Sub messages based on publish time
     and outputs a list of tuples, each containing a message and its publish time.
