@@ -83,7 +83,7 @@ def get_consumer(topic_name, group_id,
     else:
         decode = get_decode(schema = schema, verbose = verbose)
         value_deserializer = decode
-    if verbose:
+    if verbose and deserializer == 'avro':
         print(f'decode is {decode}')
     consumer = KafkaConsumer(
         topic_name,

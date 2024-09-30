@@ -8,6 +8,7 @@ from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, Windo
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows
 import apache_beam as beam
+from apache_beam.transforms.periodicsequence import PeriodicImpulse
 """
 to test
 
@@ -31,14 +32,20 @@ def _get_args():
     known_args, pipeline_args = parser.parse_known_args()
     return known_args, pipeline_args
 
+
 class ProcessPubSubDoFn(beam.DoFn):
   """parse pub/sub message."""
+
+  def __init__(self, side):
+      self.side = side
+
   def process(self, element):
       for i in element[1]:
           d = json.loads(i)
           for key in d.keys():
-              yield (key, d[key])
-          yield d
+              yield (d[key], self.side)
+          
+          #yield (d['value'], side)
     
 
 class GroupMessagesByFixedWindows(PTransform):
@@ -78,6 +85,14 @@ class AddTimestamp(DoFn):
             ),
         )
 
+class CreateData(beam.DoFn):
+    """
+    example
+    """
+
+    def process(self, element):
+        yield {'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
 
 def run(window_size=10.0, num_shards=5, pipeline_args=None):
     # Set `save_main_session` to True so DoFns can access globally imported modules.
@@ -93,13 +108,29 @@ def run(window_size=10.0, num_shards=5, pipeline_args=None):
         streaming=True, 
         save_main_session=True,
         template_location= known_args.template_location,
+        runner = 'FlinkRunner', 
+        flink_master="localhost:8081",
+        environment_type="LOOPBACK"
     )
+    side = {'time':datetime(2024,9,29, 13)}
 
     with Pipeline(options=pipeline_options) as pipeline:
-        lines = pipeline | "Read from Pub/Sub" >> io.ReadFromPubSub(subscription = subscription) \
+        main = pipeline | "Read from Pub/Sub" >> io.ReadFromPubSub(subscription = subscription) \
         | "Window into" >> GroupMessagesByFixedWindows(window_size, num_shards) \
-        | "process pub/sub" >> ParDo(ProcessPubSubDoFn()) \
-        | 'print1' >> beam.Map(print)
+        | "process pub/sub" >> ParDo(ProcessPubSubDoFn(side = side)) 
+        side_input = (
+            pipeline
+            | "PeriodicImpulse"
+            >> PeriodicImpulse(
+                start_timestamp=datetime.now().timestamp(),
+                fire_interval=10,
+                apply_windowing=True,
+            )
+            | 'create data' >> beam.ParDo(CreateData())
+            )
+        
+        main | ("print2" >> beam.Map(print)
+                )
 
 
 if __name__ == "__main__":
