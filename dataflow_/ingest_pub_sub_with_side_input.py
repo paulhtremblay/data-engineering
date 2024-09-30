@@ -111,6 +111,8 @@ def run(window_size=10.0, num_shards=5, pipeline_args=None):
         runner = 'FlinkRunner', 
         flink_master="localhost:8081",
         environment_type="LOOPBACK"
+
+
     )
     side = {'time':datetime(2024,9,29, 13)}
 
