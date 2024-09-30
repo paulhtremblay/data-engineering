@@ -58,3 +58,17 @@ sudo apt-get update
 
 #$(. /etc/os-release && echo "$VERSION_CODENAME")
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+#================================================================================================#
+#install java
+#================================================================================================#
+sudo apt install default-jre
+
+#================================================================================================#
+#install flink
+#================================================================================================#
+
+mkdir ~/Applications
+cd ~/Applications
+wget https://dlcdn.apache.org/flink/flink-1.18.1/flink-1.18.1-bin-scala_2.12.tgz
+tar -xvzf  flink-1.18.1-bin-scala_2.12.tgz 
+

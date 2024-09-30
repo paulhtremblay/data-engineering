@@ -53,11 +53,13 @@ def _make_data(len_ = 7):
 
 
 
-def my_publish(project_id, topic_id):
+def my_publish(project_id, topic_id, verbose = False):
     topic_path = publisher.topic_path(project_id, topic_id)
 
     for i in range(10):
         data = _make_data()
+        if verbose:
+            print(f'data is {data}')
         publish_future = publisher.publish(topic_path, data)
         publish_future.add_done_callback(get_callback(publish_future, data))
         publish_futures.append(publish_future)
@@ -68,4 +70,7 @@ def my_publish(project_id, topic_id):
 
 if __name__ == '__main__':
     args = _get_args()
-    my_publish(project_id = "paul-henry-tremblay", topic_id = args.topic)
+    my_publish(
+            project_id = "paul-henry-tremblay", 
+            topic_id = args.topic,
+            verbose = args.verbose)

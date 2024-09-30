@@ -6,6 +6,7 @@ import json
 
 from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, WindowInto, WithKeys
 from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.options.pipeline_options import SetupOptions
 from apache_beam.transforms.window import FixedWindows
 import apache_beam as beam
 from apache_beam.transforms.periodicsequence import PeriodicImpulse
@@ -18,36 +19,44 @@ python publish_pub_sub.py testtopic
 
 """
 
+class RunTimeOptions(PipelineOptions):
+    """
+    used when running the batch job
+    (Cannot be used streaming?)
+    """
+
+    @classmethod
+    def _add_argparse_args(cls, parser):
+        parser.add_value_provider_argument(
+          '--out_bucket',
+          type = str,
+          required = True,
+          help='bucket/folder for output')
+        parser.add_value_provider_argument(
+          '--verbose',
+          required=False,
+          help='verbose.')
+
+
 def _get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument( '--temp_location', '-tl',
              required = True,
              help='bucket ')
-    parser.add_argument( '--runner', '-r',
-            choices = ['DataflowRunner', 'DirectRunner'],
-            default = 'DataflowRunner',
-        help='runner')
-    parser.add_argument( '--template_location', '-t',
-            default = None,
-        help='if creating a template')
+    parser.add_argument( '--project',
+             required = False,
+             default = 'paul-henry-tremblay',
+             help='bucket ')
+    parser.add_argument(
+          '--subscription',
+          type = str,
+          required = False,
+          default = 'testtopic-sub',
+          help='subscription')
     known_args, pipeline_args = parser.parse_known_args()
     return known_args, pipeline_args
 
 
-class ProcessPubSubDoFn(beam.DoFn):
-  """parse pub/sub message."""
-
-  def __init__(self, side):
-      self.side = side
-
-  def process(self, element):
-      for i in element[1]:
-          d = json.loads(i)
-          for key in d.keys():
-              yield (d[key], self.side)
-          
-          #yield (d['value'], side)
-    
 
 class GroupMessagesByFixedWindows(PTransform):
     """A composite transform that groups Pub/Sub messages based on publish time
@@ -74,43 +83,9 @@ class GroupMessagesByFixedWindows(PTransform):
         )
 
 
-class AddTimestamp(DoFn):
-    def process(self, element, publish_time=DoFn.TimestampParam):
-        """Processes each windowed element by extracting the message body and its
-        publish time into a tuple.
-        """
-        yield (
-            element.decode("utf-8"),
-            datetime.utcfromtimestamp(float(publish_time)).strftime(
-                "%Y-%m-%d %H:%M:%S.%f"
-            ),
-        )
-
-class CreateData(beam.DoFn):
-    """
-    example
-    """
-
-    def process(self, element):
-        yield {'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-class MergeWithSide(beam.DoFn):
-
-    def __init__(self, side):
-        self.side = side
-
-    def process(self, element):
-        # element[1] is the actual data, in binary
-        d = json.loads(element[1][0])
-        #v = self.side[0]
-        x = beam.Map(lambda x: x)
-        d['time'] = str(type(x))
-        yield d
-
 def  merge_with_side(element, side):
     d = json.loads(element[1][0])
-    v = self.side
-    d['time'] = v
+    d['time'] = side['time']
     return d
 
 
@@ -127,24 +102,19 @@ def dump_to_json(element):
 def create_side_data(element):
         return  {'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-def run(window_size=10.0, num_shards=5, pipeline_args=None):
+def run(window_size=10.0, num_shards=5):
     # Set `save_main_session` to True so DoFns can access globally imported modules.
     known_args, pipeline_args = _get_args()
-    project = 'paul-henry-tremblay'
-    subscription = 'projects/{project}/subscriptions/testtopic-sub'.format(project = project)
+    subscription = f'projects/{known_args.project}/subscriptions/{known_args.subscription}'
     window_size = 1.0
-    bucket = 'none'
-    pipeline_args = ['--region',  'us-central1',  '--project',project , '--temp_location',  
-          f'gs://{known_args.temp_location}', '--runner', known_args.runner] 
     pipeline_options = PipelineOptions(
-        pipeline_args, 
+        region= 'us-central1',
+        project= known_args.project, 
+        runner= 'DataflowRunner',
         streaming=True, 
-        save_main_session=True,
-        template_location= known_args.template_location,
-
-
     )
-    side = {'time':datetime(2024,9,29, 13)}
+    pipeline_options.view_as(SetupOptions).save_main_session = True
+    runtime_options = pipeline_options.view_as(RunTimeOptions)
 
     with Pipeline(options=pipeline_options) as pipeline:
         main = (pipeline | "Read from Pub/Sub" >> io.ReadFromPubSub(subscription = subscription) 
@@ -158,20 +128,17 @@ def run(window_size=10.0, num_shards=5, pipeline_args=None):
                 fire_interval=10,
                 apply_windowing=True,
             )
-            | 'create data' >> beam.ParDo(CreateData())
+            | 'create data' >> beam.Map(create_side_data)
             )
         
         main | ( 
-             "merge" >> beam.ParDo(MergeWithSide(side = beam.pvalue.AsIter(side_input)))
+             "merge" >> beam.Map(merge_with_side, side = beam.pvalue.AsSingleton(side_input))
             | "to json" >> beam.Map(dump_to_json)
-            | "output to text" >>  WriteToFiles('gs://paul-henry-tremblay-general/ingest_pub_sub_with_sides10')
+            | "output to text" >>  WriteToFiles(runtime_options.out_bucket)
                 
-
                 )
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
-    run(
-    )
+    run()
