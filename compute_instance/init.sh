@@ -8,9 +8,9 @@ set -e
 
 #ssh-keygen -q -t rsa -N '' <<< $'\ny' >/dev/null 2>&1
 #
+#sudo apt install git-all
 
 sudo apt-get update
-sudo apt install git-all
 
 sudo apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev \
                         libreadline-dev libsqlite3-dev wget curl llvm \
@@ -72,3 +72,10 @@ cd ~/Applications
 wget https://dlcdn.apache.org/flink/flink-1.18.1/flink-1.18.1-bin-scala_2.12.tgz
 tar -xvzf  flink-1.18.1-bin-scala_2.12.tgz 
 
+#================================================================================================#
+# install vim
+#================================================================================================#
+
+mkdir -p ~/.vim/pack/vendor/start
+git clone git@github.com:ap/vim-buftabline.git  ~/.vim/pack/vendor/start/vim-buftab-master
+git clone https://github.com/ervandew/supertab.git ~/.vim/pack/vendor/start/supertab-master
