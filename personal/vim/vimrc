@@ -1,0 +1,24 @@
+syntax enable
+let $MYHOME=expand('<sfile>:p:h:h')
+map <Space> <PageDown>
+map <Backspace> <PageUp>
+"source $MYHOME/.vim/python_vim.vim
+"execute pathogen#infect()
+set shortmess+=A
+set hidden
+" backup to ~/.tmp
+set backupdir=$HOME/.backup//
+set directory=$HOME/.swap//
+set undodir=$HOME/.undo//
+"filetype plugin on
+filetype plugin indent on
+set incsearch
+set encoding=utf8
+"source ~/.vim/ftplugin/minibufexpl.vim
+set nobomb
+set number
+set textwidth=5000
+set tabstop=4
+set shiftwidth=4
+autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
+let buftabline_numbers=1
