@@ -17,7 +17,7 @@ sudo apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev \
                         libncurses5-dev libncursesw5-dev xz-utils tk-dev \
                         libffi-dev liblzma-dev python3-openssl git
 
-for VERSION in  3.8.16 3.9.2
+for VERSION in  3.8.16 3.9.2 3.10.15 3.11.10 3.12.7 
 do
 	echo DOING $VERSION
 	DIR=~/${VERSION}
@@ -79,3 +79,6 @@ tar -xvzf  flink-1.18.1-bin-scala_2.12.tgz
 mkdir -p ~/.vim/pack/vendor/start
 git clone git@github.com:ap/vim-buftabline.git  ~/.vim/pack/vendor/start/vim-buftab-master
 git clone https://github.com/ervandew/supertab.git ~/.vim/pack/vendor/start/supertab-master
+mkdir ~/.swap
+mkdir ~/.backup
+mkdir ~/.undo

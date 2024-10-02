@@ -23,14 +23,14 @@ class RunTimeOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
         parser.add_value_provider_argument(
+          '--verbose',
+          required=False,
+          help='verbose.')
+        parser.add_value_provider_argument(
           '--out',
           type = str,
           required = True,
           help='bucket/folder for output')
-        parser.add_value_provider_argument(
-          '--verbose',
-          required=False,
-          help='verbose.')
 
 
 def _get_args():
@@ -43,11 +43,6 @@ def _get_args():
              required = False,
              default = 'paul-henry-tremblay',
              help='bucket ')
-    parser.add_argument(
-          '--topic',
-          type = str,
-          required = True,
-          help='topic')
     known_args, pipeline_args = parser.parse_known_args()
     return known_args, pipeline_args
 
@@ -69,6 +64,12 @@ def json_serial(obj):
 def dump_to_json(element):
     return json.dumps(element, default = json_serial)
 
+def _get_topics():
+    with open('dynamic_topics.txt', 'r') as read_obj:
+        lines = read_obj.readlines()[0].strip()
+    return [lines]
+
+
 def run(
     bootstrap_servers,
     ):
@@ -83,6 +84,7 @@ def run(
     )
     pipeline_options.view_as(SetupOptions).save_main_session = True
     runtime_options = pipeline_options.view_as(RunTimeOptions)
+    topics = _get_topics()
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
 
@@ -93,7 +95,7 @@ def run(
                     'group.id': 'my-group',
                     'isolation.level': 'read_uncommitted',
                     },
-                topics=[known_args.topic],
+                topics=topics,
                 max_num_records = 2, 
                 commit_offset_in_finalize = True,
                 with_metadata=True)
