@@ -188,3 +188,7 @@ dataflow_/temp.py
 dataflow_/temp/
 dataflow_/temp2.py
 dataflow_/output/
+compute_instance/temp.sh
+dataflow_/temp.sh
+paccar/enrichment/enrichment_dependencies/
+paccar/enrichment/temp.py
