@@ -91,12 +91,14 @@ def get_consumer(topic_name, group_id,
          auto_offset_reset='earliest',
          enable_auto_commit=enable_auto_commit,
          group_id=group_id,
-         value_deserializer=value_deserializer)
+         #value_deserializer=value_deserializer
+         )
     return consumer
 
 def get_data(consumer):
     while True:
         poll_messages = consumer.poll()
+
         for message in consumer:
             print(message.value)
 
