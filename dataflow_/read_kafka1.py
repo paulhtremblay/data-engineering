@@ -80,6 +80,7 @@ def run(
         project= known_args.project, 
         runner= known_args.runner,
         streaming=True, 
+        environment_type="LOOPBACK"
     )
     pipeline_options.view_as(SetupOptions).save_main_session = True
     runtime_options = pipeline_options.view_as(RunTimeOptions)
