@@ -1,0 +1,9 @@
+{
+	"namespace": "example.avro",
+	"type": "record",
+	"name": "words",
+	"fields": [
+		{"name": "word", "type": ["null", {"type":"string"}]},
+		{"name": "timestamp", "type": ["null", {"type":"long", "logicalType": "timestamp-millis"}]}
+		]
+}
