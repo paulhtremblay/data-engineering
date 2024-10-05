@@ -1,3 +1,4 @@
+import  sys
 from time import sleep
 from kafka import KafkaConsumer
 from json import dumps
@@ -104,7 +105,7 @@ def get_data(consumer):
                 print(message.value)
                 print(message.key)
         except KeyboardInterrupt:
-            pass
+            sys.exit(0)
 
 def get_data_(consumer):
     for message in consumer:

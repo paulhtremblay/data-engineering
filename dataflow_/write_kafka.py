@@ -16,15 +16,6 @@ from apache_beam import Pipeline
 import apache_beam.typehints.schemas 
 from apache_beam.typehints.schemas  import Any as BeamAny
 
-
-
-"""
-to test
-
-in another shell run:
-python publish_pub_sub.py ingest_test
-
-"""
 DATA = [
         ('user1', 1),
         ('user2', 2),
