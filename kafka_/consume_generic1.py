@@ -99,8 +99,12 @@ def get_data(consumer):
     while True:
         poll_messages = consumer.poll()
 
-        for message in consumer:
-            print(message.value)
+        try:
+            for message in consumer:
+                print(message.value)
+                print(message.key)
+        except KeyboardInterrupt:
+            pass
 
 def get_data_(consumer):
     for message in consumer:
