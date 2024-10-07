@@ -82,3 +82,9 @@ git clone https://github.com/ervandew/supertab.git ~/.vim/pack/vendor/start/supe
 mkdir ~/.swap
 mkdir ~/.backup
 mkdir ~/.undo
+
+#================================================================================================#
+# install psql client 
+#================================================================================================#
+
+sudo apt-get install -y postgresql-client

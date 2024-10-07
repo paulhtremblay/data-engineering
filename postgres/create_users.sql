@@ -1,2 +1,2 @@
---CREATE USER henry PASSWORD 'password';
+CREATE USER henry PASSWORD 'password';
 GRANT ALL PRIVILEGES ON DATABASE test TO henry;
