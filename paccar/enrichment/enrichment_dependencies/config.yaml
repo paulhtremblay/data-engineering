@@ -1,0 +1,7 @@
+bootstrap_servers: 'localhost:9092'
+max_num_records: 2
+
+topics:
+  - 'ingest_test'
+
+out_topic: 'enriched_test'
