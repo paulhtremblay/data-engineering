@@ -45,7 +45,7 @@ def _get_args():
             help="number of topics to produces. If no number is passed, producer produces topics forever.")
     parser.add_argument("--sleep-time", 
             type = float,  
-            default = 1,
+            default = 0,
             help="time between each topic")
     args = parser.parse_args()
     return args
@@ -217,6 +217,7 @@ if __name__ == '__main__':
             topic_name = args.topic_name,
             sleep_time = args.sleep_time,
             key = args.key,
-            verbose = args.verbose
+            verbose = args.verbose,
+            number = args.number,
             )
 
