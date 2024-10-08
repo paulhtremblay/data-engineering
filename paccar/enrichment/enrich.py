@@ -124,6 +124,9 @@ def get_value(element:Tuple[Any, Iterable[BeamAny]]) :
     value = kafka_obj.value
     return ('a'.encode('utf8'), value)
 
+def prepare_for_kafka_write(element, key):
+    return (key.encode('utf8'), json.dumps(element).encode('utf8'))
+
 def _make_pipeline_options(known_args:argparse.Namespace) -> apache_beam.options.pipeline_options.PipelineOptions:
     """
     create pipeline_options needed for pipeline
