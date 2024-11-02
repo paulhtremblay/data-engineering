@@ -1,0 +1,12 @@
+{
+  "name": "Logging",
+  "description": "Logging",
+  "parameters": [
+	{
+      "name": "verbosity",
+      "label": "be verbose",
+      "helpText": "level of logging",
+	  "isOptional":true
+    }
+  ]
+}

@@ -1,11 +1,10 @@
 FROM gcr.io/dataflow-templates-base/python3-template-launcher-base
 arg BASE=/template
-arg PY_FILE=wordcount.py
+arg PY_FILE=logging_ex.py
 arg REQUIREMENTS_FILE=requirements.txt
 arg SETUP=setup.py
 arg DEPENDENCIES=dependencies
 
-#ENV FLEX_TEMPLATE_PYTHON_REQUIREMENTS_FILE="/template/requirements.txt"
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="${BASE}/${PY_FILE}"
 ENV FLEX_TEMPLATE_PYTHON_SETUP_FILE=${BASE}/$SETUP
 
@@ -21,7 +20,6 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Set this if using Beam 2.37.0 or earlier SDK to speed up job submission.
 ENV PIP_NO_DEPS=True
-ENV TEST_VAR=TEST1
 
 ENTRYPOINT ["/opt/google/dataflow/python_template_launcher"]
 
