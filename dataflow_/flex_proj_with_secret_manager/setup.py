@@ -8,6 +8,6 @@ setup(
     author_email='author@gmail.com',
     description='Description of my package',
     packages=find_packages(),    
-    install_requires=['google-cloud-secret-manager==2.21.0'],
+    #install_requires=['google-cloud-secret-manager==2.21.0'],
 
 )
