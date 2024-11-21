@@ -6,12 +6,14 @@ arg SETUP=setup.py
 arg DEPENDENCIES=dependencies
 
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="${BASE}/${PY_FILE}"
-ENV FLEX_TEMPLATE_PYTHON_SETUP_FILE=${BASE}/$SETUP
+#ENV FLEX_TEMPLATE_PYTHON_SETUP_FILE=${BASE}/$SETUP
 
 COPY ${PY_FILE} ${BASE}/${PY_FILE}
 COPY ${REQUIREMENTS_FILE} ${BASE}/${REQUIREMENTS_FILE}
 COPY ${DEPENDENCIES} ${BASE}/${DEPENDENCIES}
 COPY ${SETUP} ${BASE}
+COPY temp/dependencies2 ${BASE}/temp/dependencies2
+COPY temp/setup.py ${BASE}/temp/setup.py
 
 
 RUN pip install --no-cache-dir --upgrade pip \
@@ -20,5 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Set this if using Beam 2.37.0 or earlier SDK to speed up job submission.
 ENV PIP_NO_DEPS=True
+RUN cd ${BASE} && python ${BASE}/$SETUP install
+RUN cd ${BASE}/temp/ && python ${BASE}/temp/setup.py install
 
 ENTRYPOINT ["/opt/google/dataflow/python_template_launcher"]

@@ -11,12 +11,10 @@ from apache_beam.options.pipeline_options import PipelineOptions, WorkerOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
 
+#import sys
+#sys.path.append('/home/paulhtremblay/projects/data-engineering/dataflow_/flex_proj_with_secret_manager/temp')
 from  dependencies import lib1 
-
-try:
-    import tothe
-except ModuleNotFoundError:
-    pass
+from  dependencies2 import lib2 
 
 DATA = [
         ('user1', 1),
@@ -41,6 +39,7 @@ class Transform(beam.DoFn):
     def process(self, element):
         lib1.get_secret(project_id = 'paul-henry-tremblay',
                 secret_id = 'test1')
+        lib2.func2()
         yield element
 
 
